@@ -382,16 +382,16 @@ async function executeRebalance(
       transactionIxs.length / investBatchSize
     )} transactions`
   );
-  // for (let i = 0; i < transactionIxs.length; i += investBatchSize) {
-  //   const ixs = transactionIxs.slice(i, i + investBatchSize);
-  //   const txSig = await sendAndConfirmOptimisedTx(
-  //     ixs,
-  //     config.rpcUrl,
-  //     manager,
-  //     [],
-  //     addressLookupTableAccounts
-  //   );
-  //   logger.info(`Rebalance strategy confirmed with signature: ${txSig}`);
-  //   await new Promise((resolve) => setImmediate(resolve));
-  // }
+  for (let i = 0; i < transactionIxs.length; i += investBatchSize) {
+    const ixs = transactionIxs.slice(i, i + investBatchSize);
+    const txSig = await sendAndConfirmOptimisedTx(
+      ixs,
+      config.rpcUrl,
+      manager,
+      [],
+      addressLookupTableAccounts
+    );
+    logger.info(`Rebalance strategy confirmed with signature: ${txSig}`);
+    await new Promise((resolve) => setImmediate(resolve));
+  }
 }
