@@ -1,5 +1,7 @@
 # Rebalance Bot Template
 
+[![Run on Replit](https://replit.com/badge/github/voltrxyz/rebalance-bot-template)](https://replit.com/github/voltrxyz/rebalance-bot-template)
+
 A Voltr vault manager bot that distributes funds equally across lending strategies on a fixed schedule. Built for Solana.
 
 ## How It Works
@@ -55,7 +57,7 @@ pnpm run dev
 
 1. Fork this repo on Replit
 2. Open the **Secrets** tab and add each variable from `.env.example`
-3. For the manager keypair, set `MANAGER_SECRET_KEY` to your base58 private key (do **not** use `MANAGER_SECRET_PATH` on Replit)
+3. For the manager keypair, set `MANAGER_SECRET_KEY` to your base58 private key or JSON byte array (e.g. `[174,47,154,...]`) — do **not** use `MANAGER_SECRET_PATH` on Replit
 4. Edit `strategies.json` with your vault's strategy addresses
 5. Hit **Run** — the `.replit` file handles build + start automatically
 
@@ -69,7 +71,7 @@ pnpm run dev
 |----------|-------------|
 | `RPC_URL` | Solana RPC endpoint |
 | `MANAGER_SECRET_PATH` | Path to the vault manager keypair JSON file (set this **or** `MANAGER_SECRET_KEY`) |
-| `MANAGER_SECRET_KEY` | Manager private key as a base58 string or JSON byte array (set this **or** `MANAGER_SECRET_PATH`) |
+| `MANAGER_SECRET_KEY` | Manager private key as a base58 string or JSON byte array `[n,n,n,...]` (set this **or** `MANAGER_SECRET_PATH`) |
 | `VOLTR_VAULT_ADDRESS` | Voltr vault address |
 | `VOLTR_VAULT_ADMIN_ADDRESS` | Vault admin address |
 | `VOLTR_VAULT_MANAGER_ADDRESS` | Vault manager address |
