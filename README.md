@@ -51,6 +51,16 @@ pnpm start
 pnpm run dev
 ```
 
+### Running on Replit
+
+1. Fork this repo on Replit
+2. Open the **Secrets** tab and add each variable from `.env.example`
+3. For the manager keypair, set `MANAGER_SECRET_KEY` to your base58 private key (do **not** use `MANAGER_SECRET_PATH` on Replit)
+4. Edit `strategies.json` with your vault's strategy addresses
+5. Hit **Run** — the `.replit` file handles build + start automatically
+
+> Replit free tier will sleep your repl after inactivity. For a 24/7 bot, use a paid Replit plan or deploy to a VPS.
+
 ## Configuration
 
 ### Required Environment Variables
@@ -58,7 +68,8 @@ pnpm run dev
 | Variable | Description |
 |----------|-------------|
 | `RPC_URL` | Solana RPC endpoint |
-| `MANAGER_SECRET_PATH` | Path to the vault manager keypair JSON file |
+| `MANAGER_SECRET_PATH` | Path to the vault manager keypair JSON file (set this **or** `MANAGER_SECRET_KEY`) |
+| `MANAGER_SECRET_KEY` | Manager private key as a base58 string or JSON byte array (set this **or** `MANAGER_SECRET_PATH`) |
 | `VOLTR_VAULT_ADDRESS` | Voltr vault address |
 | `VOLTR_VAULT_ADMIN_ADDRESS` | Vault admin address |
 | `VOLTR_VAULT_MANAGER_ADDRESS` | Vault manager address |
@@ -83,6 +94,7 @@ pnpm run dev
 | `JUPITER_SWAP_SLIPPAGE_BPS` | `50` | Slippage tolerance for Jupiter reward swaps |
 | `REFRESH_MIN_POSITION_VALUE` | `1000000` | Min position value (lamports) to refresh |
 | `REBALANCE_DEVIATION_BPS` | `0` | Reserved for future threshold-based rebalancing |
+| `WORKER_MAX_MEMORY_MB` | `2048` | Max memory for rebalance worker thread (MB) |
 | `HEALTH_SERVER_PORT` | `9090` | HTTP health check port |
 | `LOG_LEVEL` | `info` | Pino log level |
 
@@ -114,6 +126,7 @@ src/
     connection.ts             # RPC connection manager with failover
     constants.ts              # Program IDs and discriminators
     convert.ts                # Address conversion utilities
+    keypair.ts                # Manager keypair loader (file or env var)
     utils.ts                  # Logger, sleep, retry helpers
     solana.ts                 # Transaction building and sending
     price.ts                  # Token price fetching

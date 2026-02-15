@@ -112,7 +112,7 @@ function spawnRebalanceWorker() {
   const ext = isTsNode ? ".ts" : ".js";
   const workerPath = path.resolve(__dirname, `rebalance_worker${ext}`);
   const worker = new Worker(workerPath, {
-    resourceLimits: { maxOldGenerationSizeMb: 4096 },
+    resourceLimits: { maxOldGenerationSizeMb: config.workerMaxMemoryMb },
     ...(isTsNode && { execArgv: ["--require", "ts-node/register"] }),
   });
 

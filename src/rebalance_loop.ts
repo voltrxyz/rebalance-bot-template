@@ -5,7 +5,6 @@ import {
   TransactionInstruction,
   AccountInfo,
 } from "@solana/web3.js";
-import fs from "fs";
 import { VoltrClient } from "@voltr/vault-sdk";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { config } from "./config";
@@ -40,6 +39,7 @@ import {
 import { getConnectionManager } from "./lib/connection";
 import { toAddress, toPublicKey } from "./lib/convert";
 import { strategyRegistry, DriftEarnStrategyConfig } from "./lib/strategy-config";
+import { getManagerKeypair } from "./lib/keypair";
 
 export async function runRebalanceLoop() {
   logger.info("Starting Rebalance Bot...");
@@ -48,9 +48,7 @@ export async function runRebalanceLoop() {
   const connection = connManager.getConnection();
   const rpc = connManager.getRpc();
 
-  const manager = Keypair.fromSecretKey(
-    Buffer.from(JSON.parse(fs.readFileSync(config.managerSecretPath, "utf-8")))
-  );
+  const manager = getManagerKeypair();
 
   logger.info(
     `[Rebalance Loop] Manager Loaded: ${manager.publicKey.toBase58()}`

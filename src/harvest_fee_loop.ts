@@ -3,7 +3,6 @@ import {
   Keypair,
   TransactionInstruction,
 } from "@solana/web3.js";
-import fs from "fs";
 import { VoltrClient } from "@voltr/vault-sdk";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
@@ -19,6 +18,7 @@ import { Rpc, SolanaRpcApi } from "@solana/kit";
 import { getConnectionManager } from "./lib/connection";
 import { toPublicKey } from "./lib/convert";
 import { VOLTR_PROTOCOL_ADMIN_ADDRESS } from "./lib/constants";
+import { getManagerKeypair } from "./lib/keypair";
 
 export async function runHarvestFeeLoop() {
   logger.info("🚀 Starting Harvest Fee Loop...");
@@ -26,9 +26,7 @@ export async function runHarvestFeeLoop() {
   const connManager = getConnectionManager();
   const connection = connManager.getConnection();
 
-  const manager = Keypair.fromSecretKey(
-    Buffer.from(JSON.parse(fs.readFileSync(config.managerSecretPath, "utf-8")))
-  );
+  const manager = getManagerKeypair();
 
   logger.info(
     `[Harvest Fee Loop] 🔑 Manager Loaded: ${manager.publicKey.toBase58()}`

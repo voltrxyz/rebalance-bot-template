@@ -2,7 +2,6 @@ import {
   Keypair,
   TransactionInstruction,
 } from "@solana/web3.js";
-import fs from "fs";
 import { VoltrClient } from "@voltr/vault-sdk";
 import { config } from "./config";
 import { isShuttingDown, logger, sleep } from "./lib/utils";
@@ -22,6 +21,7 @@ import { Decimal } from "decimal.js";
 import { getConnectionManager } from "./lib/connection";
 import { toAddress, toPublicKey } from "./lib/convert";
 import { strategyRegistry } from "./lib/strategy-config";
+import { getManagerKeypair } from "./lib/keypair";
 
 export async function runClaimKmarketRewardLoop() {
   logger.info("🚀 Starting Claim KMarket Reward Bot...");
@@ -30,9 +30,7 @@ export async function runClaimKmarketRewardLoop() {
   const connection = connManager.getConnection();
   const rpc = connManager.getRpc();
 
-  const manager = Keypair.fromSecretKey(
-    Buffer.from(JSON.parse(fs.readFileSync(config.managerSecretPath, "utf-8")))
-  );
+  const manager = getManagerKeypair();
 
   logger.info(
     `[Claim KMarket Reward Loop] 🔑 Manager Loaded: ${manager.publicKey.toBase58()}`

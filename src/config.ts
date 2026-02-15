@@ -19,7 +19,8 @@ const envSchema = z.object({
   // Core
   RPC_URL: z.string().min(1, "RPC_URL is required"),
   RPC_FALLBACK_URL: z.string().min(1).optional(),
-  MANAGER_SECRET_PATH: z.string().min(1, "MANAGER_SECRET_PATH is required"),
+  MANAGER_SECRET_PATH: z.string().min(1).optional(),
+  MANAGER_SECRET_KEY: z.string().min(1).optional(),
 
   // Intervals
   REFRESH_LOOP_INTERVAL_MS: z.coerce.number().default(600000),
@@ -31,6 +32,9 @@ const envSchema = z.object({
   JUPITER_SWAP_SLIPPAGE_BPS: z.coerce.number().default(50),
   REFRESH_MIN_POSITION_VALUE: z.coerce.number().default(1_000_000),
   REBALANCE_DEVIATION_BPS: z.coerce.number().default(0),
+
+  // Worker
+  WORKER_MAX_MEMORY_MB: z.coerce.number().default(2048),
 
   // Health
   HEALTH_SERVER_PORT: z.coerce.number().default(9090),
@@ -55,7 +59,10 @@ const envSchema = z.object({
   KAMINO_SCOPE_ADDRESS: addressField,
   VOLTR_LOOKUP_TABLE_ADDRESS: addressField,
   DRIFT_LOOKUP_TABLE_ADDRESS: addressField,
-});
+}).refine(
+  (data) => data.MANAGER_SECRET_PATH || data.MANAGER_SECRET_KEY,
+  { message: "Either MANAGER_SECRET_PATH or MANAGER_SECRET_KEY must be set" }
+);
 
 function parseConfig() {
   const result = envSchema.safeParse(process.env);
@@ -75,6 +82,8 @@ export const config = {
   rpcUrl: env.RPC_URL,
   rpcFallbackUrl: env.RPC_FALLBACK_URL,
   managerSecretPath: env.MANAGER_SECRET_PATH,
+  managerSecretKey: env.MANAGER_SECRET_KEY,
+  workerMaxMemoryMb: env.WORKER_MAX_MEMORY_MB,
   refreshLoopIntervalMs: env.REFRESH_LOOP_INTERVAL_MS,
   harvestFeeLoopIntervalMs: env.HARVEST_FEE_LOOP_INTERVAL_MS,
   rebalanceLoopIntervalMs: env.REBALANCE_LOOP_INTERVAL_MS,
