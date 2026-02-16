@@ -18,12 +18,13 @@ sudo bash deploy/setup.sh
 
 This will:
 1. Run `pnpm i && pnpm run build`
-2. Install the `vaults-rebalancer@.service` systemd template
-3. Auto-discover all `.env-*` files and enable a service for each
-4. Install CLI tools (`vaults-rebalancer-{logs,health,status,restart}`)
-5. Install Docker if not present
-6. Generate Prometheus config targeting all instance ports
-7. Start Prometheus + Grafana via Docker Compose
+2. Auto-discover all `.env-*` files
+3. Auto-assign unique `HEALTH_SERVER_PORT` per instance (8080, 8081, …)
+4. Install the `vaults-rebalancer@.service` systemd template and enable each instance
+5. Install CLI tools (`vaults-rebalancer-{logs,health,status,restart}`)
+6. Install Docker if not present
+7. Generate Prometheus config targeting all instance ports
+8. Start Prometheus + Grafana via Docker Compose
 
 ## How It Works
 
@@ -39,7 +40,7 @@ For `vaults-rebalancer@usdc`:
 
 After setup:
 - **Grafana**: http://localhost:3000 (login: `admin` / `admin`)
-- **Prometheus**: http://localhost:9091
+- **Prometheus**: http://localhost:9090
 
 The Grafana dashboard "Vault Rebalancer" is auto-provisioned with panels for:
 - Rebalance decisions (rate, errors, fallbacks, winner APY/TVL, duration)
@@ -84,8 +85,8 @@ vaults-rebalancer-restart usdc      # restart specific instance
 
 ## Adding a New Asset
 
-1. Create `.env-<asset>` in the project root (set a unique `HEALTH_SERVER_PORT`)
-2. Re-run `sudo bash deploy/setup.sh` — enables the new service and regenerates Prometheus targets
+1. Create `.env-<asset>` in the project root (port is auto-assigned by setup.sh)
+2. Re-run `sudo bash deploy/setup.sh` — assigns a port, enables the new service, and regenerates Prometheus targets
 
 Or manually:
 ```bash
