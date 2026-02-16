@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+instances=("$@")
+if [[ ${#instances[@]} -eq 0 ]]; then
+  mapfile -t instances < <(systemctl list-units --type=service --plain --no-legend 'vaults-rebalancer@*' | awk '{print $1}' | sed 's/vaults-rebalancer@//;s/\.service//')
+fi
+
+if [[ ${#instances[@]} -eq 0 ]]; then
+  echo "No vaults-rebalancer instances found."
+  exit 1
+fi
+
+for inst in "${instances[@]}"; do
+  sudo systemctl restart "vaults-rebalancer@${inst}"
+  echo "Restarted vaults-rebalancer@${inst}"
+done

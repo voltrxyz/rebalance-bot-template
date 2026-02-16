@@ -17,7 +17,7 @@ sudo bash deploy/setup.sh
 This will:
 1. Run `pnpm i && pnpm run build` (as `copilot` user)
 2. Install the `vaults-rebalancer@.service` systemd template
-3. Install `vaults-rebalancer-logs` and `vaults-rebalancer-health` CLI tools
+3. Install CLI tools: `vaults-rebalancer-{logs,health,status,restart}`
 4. Auto-discover all `.env-*` files and enable a service for each
 
 ## How It Works
@@ -32,22 +32,6 @@ For `vaults-rebalancer@usdc`:
 
 ## Commands
 
-### Service management
-
-```bash
-# Start/stop a single instance
-systemctl start vaults-rebalancer@usdc
-systemctl stop vaults-rebalancer@usdc
-systemctl restart vaults-rebalancer@usdc
-
-# Enable/disable on boot
-systemctl enable vaults-rebalancer@usdc
-systemctl disable vaults-rebalancer@usdc
-
-# Check status
-systemctl status vaults-rebalancer@usdc
-```
-
 ### Logs
 
 ```bash
@@ -57,11 +41,25 @@ vaults-rebalancer-logs usdc usdt    # tail specific instances
 vaults-rebalancer-logs usdc -n 100  # pass extra journalctl flags
 ```
 
-### Health checks
+### Health check
 
 ```bash
-vaults-rebalancer-health            # check all instances
-vaults-rebalancer-health usdc usdt  # check specific instances
+vaults-rebalancer-health            # quick OK/FAIL for all
+vaults-rebalancer-health usdc usdt  # specific instances
+```
+
+### Status
+
+```bash
+vaults-rebalancer-status            # detailed status for all
+vaults-rebalancer-status usdc       # specific instance
+```
+
+### Restart
+
+```bash
+vaults-rebalancer-restart           # restart all instances
+vaults-rebalancer-restart usdc      # restart specific instance
 ```
 
 ## Adding a New Asset

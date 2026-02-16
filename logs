@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+instances=()
+extra_args=()
+
+for arg in "$@"; do
+  if [[ "$arg" == -* ]]; then
+    extra_args+=("$arg")
+  else
+    instances+=("$arg")
+  fi
+done
+
+if [[ ${#instances[@]} -eq 0 ]]; then
+  mapfile -t instances < <(systemctl list-units --type=service --plain --no-legend 'vaults-rebalancer@*' | awk '{print $1}' | sed 's/vaults-rebalancer@//;s/\.service//')
+fi
+
+if [[ ${#instances[@]} -eq 0 ]]; then
+  echo "No vaults-rebalancer instances found."
+  exit 1
+fi
+
+units=()
+for inst in "${instances[@]}"; do
+  units+=(-u "vaults-rebalancer@${inst}")
+done
+
+journalctl -f "${units[@]}" "${extra_args[@]}"
