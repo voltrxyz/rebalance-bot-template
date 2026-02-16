@@ -1,4 +1,6 @@
 node_modules/
 dist/
 .env
-.env-*
+.env-usds
+.env-usdg
+.env-usd1
