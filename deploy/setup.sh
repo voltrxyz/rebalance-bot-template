@@ -170,7 +170,7 @@ providers:
     disableDeletion: false
     updateIntervalSeconds: 30
     options:
-      path: /var/lib/grafana/dashboards
+      path: /etc/grafana/dashboards
       foldersFromFilesStructure: false
 DP
 
@@ -200,7 +200,7 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./dashboards:/var/lib/grafana/dashboards:ro
+      - ./dashboards:/etc/grafana/dashboards:ro
       - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
