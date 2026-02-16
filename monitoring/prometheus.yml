@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "rebalancer"
+    static_configs:
+      # host.docker.internal resolves to the host machine from inside Docker
+      - targets: ["host.docker.internal:9090"]
