@@ -1,6 +1,12 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import { Address, address } from "@solana/kit";
+import { PublicKey } from "@solana/web3.js";
+import { BN } from "@coral-xyz/anchor";
+import { DRIFT_PROGRAM_ID } from "@drift-labs/sdk";
+import { JUPITER_LEND_PROGRAM_ID } from "./constants";
+import { config } from "../config";
+import { toPublicKey } from "./convert";
 
 export type StrategyType = "kaminoVault" | "kaminoMarket" | "driftEarn" | "jupiterLend";
 
@@ -20,6 +26,7 @@ export interface KaminoMarketStrategyConfig extends BaseStrategyConfig {
 
 export interface DriftEarnStrategyConfig extends BaseStrategyConfig {
   type: "driftEarn";
+  marketIndex: number;
 }
 
 export interface JupiterLendStrategyConfig extends BaseStrategyConfig {
@@ -49,19 +56,39 @@ function loadStrategyRegistry(): StrategyRegistry {
     readFileSync(join(process.cwd(), "strategies.json"), "utf-8")
   );
 
+  const driftProgram = new PublicKey(DRIFT_PROGRAM_ID);
+  const jupLendProgram = toPublicKey(JUPITER_LEND_PROGRAM_ID);
+  const assetMint = toPublicKey(config.assetMintAddress);
+
   const strategies: StrategyConfig[] = raw.strategies.map((s: any) => {
-    const base: BaseStrategyConfig = { id: s.id, type: s.type, address: address(s.address) };
     switch (s.type) {
-      case "driftEarn":
-        return { ...base, type: "driftEarn" } as DriftEarnStrategyConfig;
+      case "driftEarn": {
+        const [counterPartyTa] = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("spot_market_vault"),
+            new BN(s.marketIndex).toArrayLike(Buffer, "le", 2),
+          ],
+          driftProgram
+        );
+        return { id: s.id, type: "driftEarn", address: address(counterPartyTa.toBase58()), marketIndex: s.marketIndex } as DriftEarnStrategyConfig;
+      }
+      case "jupiterLend": {
+        const [fTokenMint] = PublicKey.findProgramAddressSync(
+          [Buffer.from("f_token_mint"), assetMint.toBuffer()],
+          jupLendProgram
+        );
+        const [lending] = PublicKey.findProgramAddressSync(
+          [Buffer.from("lending"), assetMint.toBuffer(), fTokenMint.toBuffer()],
+          jupLendProgram
+        );
+        return { id: s.id, type: "jupiterLend", address: address(lending.toBase58()) } as JupiterLendStrategyConfig;
+      }
       case "kaminoVault":
-        return { ...base, type: "kaminoVault" } as KaminoVaultStrategyConfig;
+        return { id: s.id, type: "kaminoVault", address: address(s.address) } as KaminoVaultStrategyConfig;
       case "kaminoMarket":
-        return { ...base, type: "kaminoMarket" } as KaminoMarketStrategyConfig;
-      case "jupiterLend":
-        return { ...base, type: "jupiterLend" } as JupiterLendStrategyConfig;
+        return { id: s.id, type: "kaminoMarket", address: address(s.address) } as KaminoMarketStrategyConfig;
       default:
-        return base;
+        return { id: s.id, type: s.type, address: address(s.address) } as BaseStrategyConfig;
     }
   });
 

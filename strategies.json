@@ -1,8 +1,8 @@
 {
   "strategies": [
-    { "id": "driftMain", "type": "driftEarn", "address": "GXWqPpjQpdz7KZw9p7f5PX2eGxHAhvpNXiviFkAB8zXg" },
-    { "id": "driftJlp", "type": "driftEarn", "address": "TMoWTkuPJHArEeohUTWy3RYoMgfWqeCpzjPTLeGVYP9" },
-    { "id": "jupiterLend", "type": "jupiterLend", "address": "2vVYHYM8VYnvZqQWpTJSj8o8DBf1wM8pVs3bsTgYZiqJ" },
+    { "id": "driftMain", "type": "driftEarn", "marketIndex": 0 },
+    { "id": "driftJlp", "type": "driftEarn", "marketIndex": 34 },
+    { "id": "jupiterLend", "type": "jupiterLend" },
     { "id": "kaminoMainMarket", "type": "kaminoVault", "address": "A3hTCWdnfV6uiQLxRmnv17EpiEtmc93v1AGQnWy44Mup" },
     { "id": "kaminoMainMarket", "type": "kaminoMarket", "address": "D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59" },
     { "id": "kaminoJlpMarket", "type": "kaminoMarket", "address": "Ga4rZytCpq1unD4DbEJ5bkHeUz9g3oh9AAFEi6vSauXp" },

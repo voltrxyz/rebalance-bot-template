@@ -82,15 +82,16 @@ export function evaluateDriftSpotMarketYield(
 
 export async function createDepositDEarnStrategyIx(
   voltrClient: VoltrClient,
+  marketIndex: number,
   managerKp: Keypair,
   depositAmount: BN,
   transactionIxs: TransactionInstruction[] = [],
   addressLookupTableAddresses: string[] = []
 ) {
   try {
-    const spotMarketConfig = MainnetSpotMarkets.filter(
-      spotMarketConfig => spotMarketConfig.mint.equals(toPublicKey(config.assetMintAddress))
-    ).at(0);
+    const spotMarketConfig = MainnetSpotMarkets.find(
+      spotMarketConfig => spotMarketConfig.marketIndex === marketIndex
+    );
     if (!spotMarketConfig) throw Error("Invalid spot market config");
 
     const [counterPartyTaAddr] = await getProgramDerivedAddress({
@@ -190,15 +191,16 @@ export async function createDepositDEarnStrategyIx(
 
 export async function createWithdrawDEarnStrategyIx(
   voltrClient: VoltrClient,
+  marketIndex: number,
   managerKp: Keypair,
   withdrawAmount: BN,
   transactionIxs: TransactionInstruction[] = [],
   addressLookupTableAddresses: string[] = []
 ) {
   try {
-    const spotMarketConfig = MainnetSpotMarkets.filter(
-      spotMarketConfig => spotMarketConfig.mint.equals(toPublicKey(config.assetMintAddress))
-    ).at(0);
+    const spotMarketConfig = MainnetSpotMarkets.find(
+      spotMarketConfig => spotMarketConfig.marketIndex === marketIndex
+    );
     if (!spotMarketConfig) throw Error("Invalid spot market config");
 
     const [counterPartyTaAddr] = await getProgramDerivedAddress({

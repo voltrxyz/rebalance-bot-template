@@ -275,6 +275,7 @@ async function executeRebalance(
         const driftConfig = strategyRegistry.byId.get(allocation.strategyId)! as DriftEarnStrategyConfig;
         await createWithdrawDEarnStrategyIx(
           voltrClient,
+          driftConfig.marketIndex,
           manager,
           withdrawAmount,
           transactionIxs,
@@ -330,6 +331,7 @@ async function executeRebalance(
         const driftConfig = strategyRegistry.byId.get(allocation.strategyId)! as DriftEarnStrategyConfig;
         await createDepositDEarnStrategyIx(
           voltrClient,
+          driftConfig.marketIndex,
           manager,
           depositAmount,
           transactionIxs,
