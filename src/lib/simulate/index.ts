@@ -86,11 +86,13 @@ export async function getCurrentAndTargetAllocation(
     new BN(0)
   );
 
-  workerMetrics.set("vault_total_value", totalPositionValue.toNumber());
-  workerMetrics.set("vault_idle_balance", idleBalance.toNumber());
+  const decimals = 6;
+  const divisor = 10 ** decimals;
+  workerMetrics.set("vault_total_value", totalPositionValue.toNumber() / divisor);
+  workerMetrics.set("vault_idle_balance", idleBalance.toNumber() / divisor);
   for (const alloc of prevAllocations) {
     if (alloc.strategyType !== "idle") {
-      workerMetrics.set("strategy_position_value", alloc.positionValue.toNumber(), {
+      workerMetrics.set("strategy_position_value", alloc.positionValue.toNumber() / divisor, {
         strategy_id: alloc.strategyId,
         strategy_type: alloc.strategyType,
       });
@@ -136,7 +138,7 @@ export async function getCurrentAndTargetAllocation(
 
   for (const alloc of targetAllocations) {
     if (alloc.strategyType !== "idle") {
-      workerMetrics.set("strategy_target_value", alloc.positionValue.toNumber(), {
+      workerMetrics.set("strategy_target_value", alloc.positionValue.toNumber() / divisor, {
         strategy_id: alloc.strategyId,
         strategy_type: alloc.strategyType,
       });
