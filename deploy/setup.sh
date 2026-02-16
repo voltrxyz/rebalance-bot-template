@@ -27,7 +27,24 @@ fi
 
 echo "Discovered instances: ${instances[*]}"
 
-# ── 3. Systemd services ────────────────────────────────────
+# ── 3. Assign health server ports ────────────────────────
+BASE_PORT=8080
+echo ""
+echo "=== Assigning health server ports ==="
+port_idx=0
+for inst in "${instances[@]}"; do
+  assigned_port=$((BASE_PORT + port_idx))
+  env_file="$WORK_DIR/.env-${inst}"
+  if grep -q '^HEALTH_SERVER_PORT=' "$env_file" 2>/dev/null; then
+    sed -i "s/^HEALTH_SERVER_PORT=.*/HEALTH_SERVER_PORT=${assigned_port}/" "$env_file"
+  else
+    echo "HEALTH_SERVER_PORT=${assigned_port}" >> "$env_file"
+  fi
+  echo "  ${inst} → port ${assigned_port}"
+  port_idx=$((port_idx + 1))
+done
+
+# ── 4. Systemd services ────────────────────────────────────
 echo ""
 echo "=== Installing systemd services ==="
 cp "$UNIT_FILE" /etc/systemd/system/vaults-rebalancer@.service
@@ -38,7 +55,7 @@ for inst in "${instances[@]}"; do
   echo "  enabled vaults-rebalancer@${inst}"
 done
 
-# ── 4. CLI helper scripts ──────────────────────────────────
+# ── 5. CLI helper scripts ──────────────────────────────────
 echo ""
 echo "=== Installing CLI tools ==="
 install_cli() {
@@ -77,7 +94,7 @@ journalctl \"\${units[@]}\" -f --no-hostname -o cat
 install_cli "health" "${RESOLVE_INSTANCES}
 instances=(\$(resolve_instances \"\$@\"))
 for inst in \"\${instances[@]}\"; do
-  port=\$(grep -oP '(?<=HEALTH_SERVER_PORT=)\\d+' \"\$WORK_DIR/.env-\${inst}\" 2>/dev/null || grep -oP '(?<=HEALTH_SERVER_PORT=)\\d+' \"\$WORK_DIR/.env\" 2>/dev/null || echo 9090)
+  port=\$(grep -oP '(?<=HEALTH_SERVER_PORT=)\\d+' \"\$WORK_DIR/.env-\${inst}\" 2>/dev/null || grep -oP '(?<=HEALTH_SERVER_PORT=)\\d+' \"\$WORK_DIR/.env\" 2>/dev/null || echo 8080)
   if curl -sf \"http://localhost:\${port}/health\" > /dev/null 2>&1; then
     echo \"  \${inst}: OK (:\${port})\"
   else
@@ -102,7 +119,7 @@ for inst in \"\${instances[@]}\"; do
 done
 "
 
-# ── 5. Docker (for monitoring stack) ───────────────────────
+# ── 6. Docker (for monitoring stack) ───────────────────────
 echo ""
 echo "=== Setting up monitoring stack ==="
 
@@ -116,7 +133,7 @@ else
   echo "  Docker already installed"
 fi
 
-# ── 6. Generate Prometheus config with all instance targets ─
+# ── 7. Generate Prometheus config with all instance targets ─
 MONITORING_DIR="$WORK_DIR/monitoring"
 mkdir -p "$MONITORING_DIR"
 
@@ -125,7 +142,7 @@ STATIC_CONFIGS=""
 for inst in "${instances[@]}"; do
   port=$(grep -oP '(?<=HEALTH_SERVER_PORT=)\d+' "$WORK_DIR/.env-${inst}" 2>/dev/null \
       || grep -oP '(?<=HEALTH_SERVER_PORT=)\d+' "$WORK_DIR/.env" 2>/dev/null \
-      || echo "9090")
+      || echo "8080")
   STATIC_CONFIGS="${STATIC_CONFIGS}
       - targets: [\"host.docker.internal:${port}\"]
         labels:
@@ -144,7 +161,7 @@ PROM
 
 echo "  Generated prometheus.yml with per-asset targets"
 
-# ── 7. Copy monitoring configs + dashboard ──────────────────
+# ── 8. Copy monitoring configs + dashboard ──────────────────
 GRAFANA_PROV="$MONITORING_DIR/grafana/provisioning"
 mkdir -p "$GRAFANA_PROV/datasources" "$GRAFANA_PROV/dashboards" "$MONITORING_DIR/dashboards"
 
@@ -182,7 +199,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     ports:
-      - "9091:9090"
+      - "127.0.0.1:9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -193,7 +210,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
@@ -211,7 +228,7 @@ volumes:
   grafana_data:
 DC
 
-# ── 8. Start monitoring ────────────────────────────────────
+# ── 9. Start monitoring ────────────────────────────────────
 echo "  Starting Prometheus + Grafana..."
 cd "$MONITORING_DIR"
 sudo -u "$SERVICE_USER" docker compose up -d --pull always 2>/dev/null \
@@ -224,13 +241,13 @@ echo "Services:"
 for inst in "${instances[@]}"; do
   port=$(grep -oP '(?<=HEALTH_SERVER_PORT=)\d+' "$WORK_DIR/.env-${inst}" 2>/dev/null \
       || grep -oP '(?<=HEALTH_SERVER_PORT=)\d+' "$WORK_DIR/.env" 2>/dev/null \
-      || echo "9090")
+      || echo "8080")
   echo "  vaults-rebalancer@${inst}  →  http://localhost:${port}/health"
 done
 echo ""
 echo "Monitoring:"
 echo "  Grafana     →  http://localhost:3000  (admin/admin)"
-echo "  Prometheus  →  http://localhost:9091"
+echo "  Prometheus  →  http://localhost:9090"
 echo ""
 echo "CLI tools:"
 echo "  vaults-rebalancer-logs              # tail all instances"

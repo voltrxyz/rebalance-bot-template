@@ -47,7 +47,7 @@ const envSchema = z.object({
   WORKER_MAX_MEMORY_MB: z.coerce.number().default(2048),
 
   // Health
-  HEALTH_SERVER_PORT: z.coerce.number().default(9090),
+  HEALTH_SERVER_PORT: z.coerce.number().default(8080),
 
   // Feature flags
   ENABLE_REBALANCE_LOOP: boolFlag("true"),

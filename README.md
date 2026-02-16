@@ -94,7 +94,7 @@ pnpm run dev
 | `REFRESH_MIN_POSITION_VALUE` | `1000000` | Min position value (lamports) to refresh |
 | `REBALANCE_DEVIATION_BPS` | `0` | Reserved for future threshold-based rebalancing |
 | `WORKER_MAX_MEMORY_MB` | `2048` | Max memory for rebalance worker thread (MB) |
-| `HEALTH_SERVER_PORT` | `9090` | HTTP health check port |
+| `HEALTH_SERVER_PORT` | `8080` | HTTP health check port |
 | `LOG_LEVEL` | `info` | Pino log level |
 
 ### Feature Flags
