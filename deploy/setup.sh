@@ -172,7 +172,7 @@ datasources:
     type: prometheus
     uid: prometheus
     access: proxy
-    url: http://prometheus:9090
+    url: http://localhost:9090
     isDefault: true
     editable: false
 DS
