@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { Address, address } from "@solana/kit";
 import { PublicKey } from "@solana/web3.js";
@@ -55,6 +55,15 @@ function loadStrategyRegistry(): StrategyRegistry {
   const raw = JSON.parse(
     readFileSync(join(process.cwd(), "strategies.json"), "utf-8")
   );
+
+  const assetSymbol = process.env.ASSET_SYMBOL?.toLowerCase();
+  if (assetSymbol) {
+    const assetFile = join(process.cwd(), `${assetSymbol}-strategies.json`);
+    if (existsSync(assetFile)) {
+      const assetRaw = JSON.parse(readFileSync(assetFile, "utf-8"));
+      raw.strategies.push(...assetRaw.strategies);
+    }
+  }
 
   const driftProgram = new PublicKey(DRIFT_PROGRAM_ID);
   const jupLendProgram = toPublicKey(JUPITER_LEND_PROGRAM_ID);

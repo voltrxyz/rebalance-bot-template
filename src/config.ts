@@ -3,8 +3,11 @@ import { expand } from "dotenv-expand";
 import { Address, address } from "@solana/kit";
 import { z } from "zod";
 
-// Load environment variables from .env file
+// Load base .env, then layer asset-specific overrides (e.g. ENV_FILE=.env.usdc)
 expand(dotenvConfig());
+if (process.env.ENV_FILE) {
+  expand(dotenvConfig({ path: process.env.ENV_FILE, override: true }));
+}
 
 const addressField = z.string().min(1).transform((val) => address(val) as Address);
 

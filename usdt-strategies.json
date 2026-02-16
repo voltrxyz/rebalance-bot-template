@@ -1,20 +1,6 @@
 {
   "strategies": [
     {
-      "id": "driftMain",
-      "type": "driftEarn",
-      "marketIndex": 0
-    },
-    {
-      "id": "driftJlp",
-      "type": "driftEarn",
-      "marketIndex": 34
-    },
-    {
-      "id": "jupiterLend",
-      "type": "jupiterLend"
-    },
-    {
       "id": "allez-usdt",
       "type": "kaminoVault",
       "address": "A1USdT5BhSBpWiH4W6oZeykCDr9vq56qXVkMFhZjN48o"

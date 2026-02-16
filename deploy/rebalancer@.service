@@ -1,0 +1,21 @@
+[Unit]
+Description=Hubra Vault Rebalancer (%i)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=copilot
+WorkingDirectory=/home/copilot/rebalancer
+
+EnvironmentFile=/home/copilot/rebalancer/.env
+EnvironmentFile=/home/copilot/rebalancer/.env.%i
+Environment=ENV_FILE=.env.%i
+
+ExecStart=/usr/bin/node dist/index.js
+
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
