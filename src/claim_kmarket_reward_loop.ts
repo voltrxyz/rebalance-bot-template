@@ -22,6 +22,7 @@ import { getConnectionManager } from "./lib/connection";
 import { toAddress, toPublicKey } from "./lib/convert";
 import { strategyRegistry } from "./lib/strategy-config";
 import { getManagerKeypair } from "./lib/keypair";
+import { loopIterationsTotal, loopErrorsTotal, txTotal, txDurationSeconds } from "./lib/metrics";
 
 export async function runClaimKmarketRewardLoop() {
   logger.info("🚀 Starting Claim KMarket Reward Bot...");
@@ -106,13 +107,18 @@ export async function runClaimKmarketRewardLoop() {
                   rpc
                 );
 
+              const txStart = Date.now();
               const txSig = await sendAndConfirmOptimisedTx(
                 transactionIxs,
                 connManager.getRpcUrl(),
                 manager,
                 [],
-                addressLookupTableAccounts
+                addressLookupTableAccounts,
+                null,
+                "claim"
               );
+              txTotal.inc({ type: "claim_kmarket", status: "success" });
+              txDurationSeconds.observe({ type: "claim_kmarket" }, (Date.now() - txStart) / 1000);
 
               logger.info(
                 `Claim kmarket reward strategy confirmed with signature: ${txSig}`
@@ -120,10 +126,12 @@ export async function runClaimKmarketRewardLoop() {
             }
           }
         }
+        loopIterationsTotal.inc({ loop: "claim_kmarket" });
         loopCount++;
         lastExecutionTime = now;
       }
     } catch (error) {
+      loopErrorsTotal.inc({ loop: "claim_kmarket" });
       logger.error(
         error,
         `[Claim KMarket Reward Loop ${loopCount}] ❌ Error during scheduled claim reward execution`

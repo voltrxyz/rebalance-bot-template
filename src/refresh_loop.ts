@@ -22,6 +22,7 @@ import { getConnectionManager } from "./lib/connection";
 import { toAddress, toPublicKey } from "./lib/convert";
 import { strategyRegistry, DriftEarnStrategyConfig } from "./lib/strategy-config";
 import { getManagerKeypair } from "./lib/keypair";
+import { loopIterationsTotal, loopErrorsTotal, txTotal, txDurationSeconds } from "./lib/metrics";
 
 export async function runRefreshLoop() {
   logger.info("🚀 Starting Refresh Bot...");
@@ -53,11 +54,13 @@ export async function runRefreshLoop() {
       );
 
       await refreshDepositStrategies(rpc, connection, manager, voltrClient);
+      loopIterationsTotal.inc({ loop: "refresh" });
       logger.info(
         `[Refresh Loop ${loopCount}] ✅ Successfully executed scheduled refresh strategy.`
       );
       loopCount++;
     } catch (error) {
+      loopErrorsTotal.inc({ loop: "refresh" });
       logger.error(
         error,
         `[Refresh Loop ${loopCount}] ❌ Error during scheduled refresh execution`
@@ -167,14 +170,24 @@ async function refreshDepositStrategies(
   );
   for (let i = 0; i < transactionIxs.length; i += investBatchSize) {
     const ixs = transactionIxs.slice(i, i + investBatchSize);
-    const txSig = await sendAndConfirmOptimisedTx(
-      ixs,
-      getConnectionManager().getRpcUrl(),
-      manager,
-      [],
-      addressLookupTableAccounts
-    );
-    logger.info(`Refresh strategy confirmed with signature: ${txSig}`);
+    const txStart = Date.now();
+    try {
+      const txSig = await sendAndConfirmOptimisedTx(
+        ixs,
+        getConnectionManager().getRpcUrl(),
+        manager,
+        [],
+        addressLookupTableAccounts,
+        null,
+        "refresh"
+      );
+      txTotal.inc({ type: "refresh", status: "success" });
+      txDurationSeconds.observe({ type: "refresh" }, (Date.now() - txStart) / 1000);
+      logger.info(`Refresh strategy confirmed with signature: ${txSig}`);
+    } catch (error) {
+      txTotal.inc({ type: "refresh", status: "error" });
+      throw error;
+    }
     await new Promise((resolve) => setImmediate(resolve));
   }
 }

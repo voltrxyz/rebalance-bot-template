@@ -11,7 +11,23 @@ import {
   VersionedTransaction,
 } from "@solana/web3.js";
 import { Rpc, SolanaRpcApi, address, fetchEncodedAccounts } from "@solana/kit";
+import { isMainThread } from "worker_threads";
 import { logger } from "./utils";
+import * as metrics from "./metrics";
+import { workerMetrics } from "./metrics-bridge";
+
+const txMetricMap: Record<string, { observe: (labels: Record<string, string>, value: number) => void }> = {
+  tx_compute_units: metrics.txComputeUnits,
+  tx_priority_fee: metrics.txPriorityFee,
+};
+
+function observeTxMetric(name: string, value: number, labels?: Record<string, string>) {
+  if (isMainThread) {
+    txMetricMap[name]?.observe(labels ?? {}, value);
+  } else {
+    workerMetrics.observe(name, value, labels);
+  }
+}
 
 export const sendAndConfirmOptimisedTx = async (
   instructions: TransactionInstruction[],
@@ -19,7 +35,8 @@ export const sendAndConfirmOptimisedTx = async (
   payerKp: Keypair,
   signers: Keypair[] = [],
   addressLookupTableAccounts: AddressLookupTableAccount[] = [],
-  computeUnitLimit: number | null = null
+  computeUnitLimit: number | null = null,
+  txType: string = "unknown"
 ) => {
   try {
     const connection = new Connection(heliusRpcUrl);
@@ -55,6 +72,8 @@ export const sendAndConfirmOptimisedTx = async (
         optimalCUs = requiredCUs * 1.1;
       }
     }
+
+    observeTxMetric("tx_compute_units", optimalCUs, { type: txType });
 
     const computeUnitIx = ComputeBudgetProgram.setComputeUnitLimit({
       units: optimalCUs,
@@ -93,6 +112,8 @@ export const sendAndConfirmOptimisedTx = async (
       logger.error("Failed to get fee estimate, using default");
       feeEstimate = { priorityFeeEstimate: 100 };
     }
+
+    observeTxMetric("tx_priority_fee", feeEstimate.priorityFeeEstimate, { type: txType });
 
     const computePriceIx = ComputeBudgetProgram.setComputeUnitPrice({
       microLamports: feeEstimate.priorityFeeEstimate,

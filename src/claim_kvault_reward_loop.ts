@@ -24,6 +24,7 @@ import { getConnectionManager } from "./lib/connection";
 import { toAddress, toPublicKey } from "./lib/convert";
 import { strategyRegistry } from "./lib/strategy-config";
 import { getManagerKeypair } from "./lib/keypair";
+import { loopIterationsTotal, loopErrorsTotal, txTotal, txDurationSeconds } from "./lib/metrics";
 
 export async function runClaimKvaultRewardLoop() {
   logger.info("🚀 Starting Claim KVault Reward Bot...");
@@ -119,13 +120,18 @@ export async function runClaimKvaultRewardLoop() {
                   rpc
                 );
 
+              const txStart = Date.now();
               const txSig = await sendAndConfirmOptimisedTx(
                 transactionIxs,
                 connManager.getRpcUrl(),
                 manager,
                 [],
-                addressLookupTableAccounts
+                addressLookupTableAccounts,
+                null,
+                "claim"
               );
+              txTotal.inc({ type: "claim_kvault", status: "success" });
+              txDurationSeconds.observe({ type: "claim_kvault" }, (Date.now() - txStart) / 1000);
 
               logger.info(
                 `Claim kvault reward strategy (${kvConfig.id}) confirmed with signature: ${txSig}`
@@ -133,10 +139,12 @@ export async function runClaimKvaultRewardLoop() {
             }
           }
         }
+        loopIterationsTotal.inc({ loop: "claim_kvault" });
         loopCount++;
         lastExecutionTime = now;
       }
     } catch (error) {
+      loopErrorsTotal.inc({ loop: "claim_kvault" });
       logger.error(
         error,
         `[Claim KVault Reward Loop ${loopCount}] ❌ Error during scheduled claim reward execution`

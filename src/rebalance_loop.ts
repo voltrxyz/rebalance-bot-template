@@ -40,6 +40,7 @@ import { getConnectionManager } from "./lib/connection";
 import { toAddress, toPublicKey } from "./lib/convert";
 import { strategyRegistry, DriftEarnStrategyConfig } from "./lib/strategy-config";
 import { getManagerKeypair } from "./lib/keypair";
+import { workerMetrics } from "./lib/metrics-bridge";
 
 let manualTriggerResolve: (() => void) | null = null;
 
@@ -140,6 +141,8 @@ export async function runRebalanceLoop() {
             logger.info(
               `[Rebalance Loop ${loopCount}] Executing rebalance (triggered by deposit)...`
             );
+            workerMetrics.inc("rebalance_total", { trigger: "deposit" });
+            const depositStart = Date.now();
 
             const { prevAllocations, targetAllocations } =
               await getCurrentAndTargetAllocation(connection, rpc);
@@ -152,6 +155,8 @@ export async function runRebalanceLoop() {
               prevAllocations,
               targetAllocations
             );
+
+            workerMetrics.observe("rebalance_duration_seconds", (Date.now() - depositStart) / 1000);
             logger.info(
               `[Rebalance Loop ${loopCount}] Successfully executed rebalance.`
             );
@@ -159,6 +164,7 @@ export async function runRebalanceLoop() {
             lastExecutionTime = Date.now();
             loopCount++;
           } catch (error) {
+            workerMetrics.inc("rebalance_errors_total");
             logger.error(
               error,
               `[Rebalance Loop ${loopCount}] Error during rebalance execution`
@@ -195,9 +201,11 @@ export async function runRebalanceLoop() {
         var isManual = false;
       }
 
+      const trigger = isManual ? "manual" : "scheduled";
       logger.info(
-        `[Rebalance Loop ${loopCount}] Executing ${isManual ? "manual" : "scheduled"} yield-based rebalance...`
+        `[Rebalance Loop ${loopCount}] Executing ${trigger} yield-based rebalance...`
       );
+      workerMetrics.inc("rebalance_total", { trigger });
       const executionStart = Date.now();
 
       const { prevAllocations, targetAllocations } =
@@ -229,12 +237,15 @@ export async function runRebalanceLoop() {
         prevAllocations,
         targetAllocations
       );
+
+      workerMetrics.observe("rebalance_duration_seconds", (Date.now() - executionStart) / 1000);
       logger.info(
         `[Rebalance Loop ${loopCount}] Successfully executed rebalance.`
       );
       lastExecutionTime = Date.now();
       loopCount++;
     } catch (error) {
+      workerMetrics.inc("rebalance_errors_total");
       logger.error(
         error,
         `[Rebalance Loop ${loopCount}] Error during rebalance execution`
@@ -412,14 +423,22 @@ async function executeRebalance(
   );
   for (let i = 0; i < transactionIxs.length; i += investBatchSize) {
     const ixs = transactionIxs.slice(i, i + investBatchSize);
-    const txSig = await sendAndConfirmOptimisedTx(
-      ixs,
-      config.rpcUrl,
-      manager,
-      [],
-      addressLookupTableAccounts
-    );
-    logger.info(`Rebalance strategy confirmed with signature: ${txSig}`);
+    const txStart = Date.now();
+    try {
+      const txSig = await sendAndConfirmOptimisedTx(
+        ixs,
+        config.rpcUrl,
+        manager,
+        [],
+        addressLookupTableAccounts
+      );
+      workerMetrics.inc("tx_total", { type: "rebalance", status: "success" });
+      workerMetrics.observe("tx_duration_seconds", (Date.now() - txStart) / 1000, { type: "rebalance" });
+      logger.info(`Rebalance strategy confirmed with signature: ${txSig}`);
+    } catch (error) {
+      workerMetrics.inc("tx_total", { type: "rebalance", status: "error" });
+      throw error;
+    }
     await new Promise((resolve) => setImmediate(resolve));
   }
 }

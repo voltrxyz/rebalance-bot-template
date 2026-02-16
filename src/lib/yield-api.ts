@@ -1,5 +1,6 @@
 import { config } from "../config";
 import { logger } from "./utils";
+import { workerMetrics } from "./metrics-bridge";
 import { StrategyConfig, strategyRegistry } from "./strategy-config";
 
 const YIELD_MARKETS_URL = config.yieldMarketsUrl;
@@ -32,6 +33,7 @@ export async function fetchYieldMarkets(
     config.yieldApiTimeoutMs
   );
 
+  const fetchStart = Date.now();
   try {
     const response = await fetch(YIELD_MARKETS_URL, {
       signal: controller.signal,
@@ -43,11 +45,20 @@ export async function fetchYieldMarkets(
     const filtered = data.markets.filter(
       (m) => m.token.address === assetMint
     );
+
+    workerMetrics.inc("yield_api_calls_total", { status: "success" });
+    workerMetrics.observe("yield_api_duration_seconds", (Date.now() - fetchStart) / 1000);
+
     logger.debug(
       { total: data.markets.length, forAsset: filtered.length },
       "Fetched yield markets from Dial API"
     );
     return filtered;
+  } catch (error) {
+    const status = controller.signal.aborted ? "timeout" : "error";
+    workerMetrics.inc("yield_api_calls_total", { status });
+    workerMetrics.observe("yield_api_duration_seconds", (Date.now() - fetchStart) / 1000);
+    throw error;
   } finally {
     clearTimeout(timeout);
   }

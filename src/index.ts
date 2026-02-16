@@ -17,6 +17,7 @@ import { runRefreshLoop } from "./refresh_loop";
 import { runClaimKvaultRewardLoop } from "./claim_kvault_reward_loop";
 import { runHarvestFeeLoop } from "./harvest_fee_loop";
 import { runClaimKmarketRewardLoop } from "./claim_kmarket_reward_loop";
+import { register, applyMetricMessage, workerRestarts, MetricMessage } from "./lib/metrics";
 
 // --- Health server ---
 let healthServer: http.Server;
@@ -32,6 +33,15 @@ function startHealthServer(): Promise<void> {
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ status: "ok" }));
         }
+      } else if (_req.url === "/metrics" && config.metricsEnabled) {
+        register.metrics().then((metrics) => {
+          res.writeHead(200, { "Content-Type": register.contentType });
+          res.end(metrics);
+        }).catch((err) => {
+          res.writeHead(500);
+          res.end(String(err));
+        });
+        return;
       } else if (_req.url === "/rebalance" && _req.method === "POST") {
         if (!rebalanceWorker) {
           res.writeHead(503, { "Content-Type": "application/json" });
@@ -129,6 +139,8 @@ function spawnRebalanceWorker() {
   worker.on("message", (msg: { type: string }) => {
     if (msg.type === "started") {
       logger.info("Rebalance worker started successfully");
+    } else if (msg.type === "metric") {
+      applyMetricMessage(msg as MetricMessage);
     }
   });
 
@@ -142,6 +154,7 @@ function spawnRebalanceWorker() {
 
     if (!isShuttingDown() && rebalanceWorkerRestarts < MAX_WORKER_RESTARTS) {
       rebalanceWorkerRestarts++;
+      workerRestarts.set(rebalanceWorkerRestarts);
       const delayMs = 1000 * Math.pow(2, rebalanceWorkerRestarts - 1);
       logger.info(
         { attempt: rebalanceWorkerRestarts, delayMs },

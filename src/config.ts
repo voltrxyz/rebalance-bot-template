@@ -55,6 +55,7 @@ const envSchema = z.object({
   ENABLE_CLAIM_KVAULT_REWARD_LOOP: boolFlag("false"),
   ENABLE_CLAIM_KMARKET_REWARD_LOOP: boolFlag("true"),
   ENABLE_HARVEST_FEE_LOOP: boolFlag("true"),
+  METRICS_ENABLED: boolFlag("true"),
 
   // Logging
   LOG_LEVEL: z.string().optional().default("info"),
@@ -113,6 +114,7 @@ export const config = {
   enableClaimKvaultRewardLoop: env.ENABLE_CLAIM_KVAULT_REWARD_LOOP,
   enableClaimKmarketRewardLoop: env.ENABLE_CLAIM_KMARKET_REWARD_LOOP,
   enableHarvestFeeLoop: env.ENABLE_HARVEST_FEE_LOOP,
+  metricsEnabled: env.METRICS_ENABLED,
 
   // On-Chain Addresses
   voltrVaultAddress: env.VOLTR_VAULT_ADDRESS,

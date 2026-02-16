@@ -19,6 +19,7 @@ import { getConnectionManager } from "./lib/connection";
 import { toPublicKey } from "./lib/convert";
 import { VOLTR_PROTOCOL_ADMIN_ADDRESS } from "./lib/constants";
 import { getManagerKeypair } from "./lib/keypair";
+import { loopIterationsTotal, loopErrorsTotal, txTotal, txDurationSeconds } from "./lib/metrics";
 
 export async function runHarvestFeeLoop() {
   logger.info("🚀 Starting Harvest Fee Loop...");
@@ -55,6 +56,7 @@ export async function runHarvestFeeLoop() {
         );
         await executeHarvestFee(connManager.getRpc(), connection, manager, voltrClient);
 
+        loopIterationsTotal.inc({ loop: "harvest" });
         logger.info(
           `[Harvest Fee Loop ${loopCount}] ✅ Successfully executed scheduled harvest fee.`
         );
@@ -63,6 +65,7 @@ export async function runHarvestFeeLoop() {
         lastExecutionTime = now;
       }
     } catch (error) {
+      loopErrorsTotal.inc({ loop: "harvest" });
       logger.error(
         error,
         `[Harvest Fee Loop ${loopCount}] ❌ Error during scheduled harvest fee execution`
@@ -147,13 +150,22 @@ async function executeHarvestFee(
     rpc
   );
 
-  const txSig = await sendAndConfirmOptimisedTx(
-    transactionIxs,
-    getConnectionManager().getRpcUrl(),
-    manager,
-    [],
-    addressLookupTableAccounts
-  );
-
-  logger.info(`Harvest fee confirmed with signature: ${txSig}`);
+  const txStart = Date.now();
+  try {
+    const txSig = await sendAndConfirmOptimisedTx(
+      transactionIxs,
+      getConnectionManager().getRpcUrl(),
+      manager,
+      [],
+      addressLookupTableAccounts,
+      null,
+      "harvest"
+    );
+    txTotal.inc({ type: "harvest", status: "success" });
+    txDurationSeconds.observe({ type: "harvest" }, (Date.now() - txStart) / 1000);
+    logger.info(`Harvest fee confirmed with signature: ${txSig}`);
+  } catch (error) {
+    txTotal.inc({ type: "harvest", status: "error" });
+    throw error;
+  }
 }

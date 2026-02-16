@@ -25,6 +25,7 @@ import {
   selectWinner,
 } from "../yield-api";
 import { logger } from "../utils";
+import { workerMetrics } from "../metrics-bridge";
 import Decimal from "decimal.js";
 
 export * from "./types";
@@ -85,6 +86,17 @@ export async function getCurrentAndTargetAllocation(
     new BN(0)
   );
 
+  workerMetrics.set("vault_total_value", totalPositionValue.toNumber());
+  workerMetrics.set("vault_idle_balance", idleBalance.toNumber());
+  for (const alloc of prevAllocations) {
+    if (alloc.strategyType !== "idle") {
+      workerMetrics.set("strategy_position_value", alloc.positionValue.toNumber(), {
+        strategy_id: alloc.strategyId,
+        strategy_type: alloc.strategyType,
+      });
+    }
+  }
+
   // Collect kvault withdrawal liquidity constraints
   type VaultState = Awaited<ReturnType<KaminoVault["getState"]>>;
   const kaminoVaultStates = new Map<string, VaultState>();
@@ -122,6 +134,15 @@ export async function getCurrentAndTargetAllocation(
     winnerId
   );
 
+  for (const alloc of targetAllocations) {
+    if (alloc.strategyType !== "idle") {
+      workerMetrics.set("strategy_target_value", alloc.positionValue.toNumber(), {
+        strategy_id: alloc.strategyId,
+        strategy_type: alloc.strategyType,
+      });
+    }
+  }
+
   return {
     prevAllocations,
     targetAllocations,
@@ -143,6 +164,7 @@ async function resolveYieldWinner(
 
     if (matched.length === 0) {
       logger.warn("No yield markets matched any registered strategy, falling back to equal-weight");
+      workerMetrics.inc("rebalance_fallback_total", { reason: "no_match" });
       return null;
     }
 
@@ -157,8 +179,16 @@ async function resolveYieldWinner(
     const winner = selectWinner(matched, totalUsd);
     if (!winner) {
       logger.warn("All candidates filtered out by TVL/dilution, falling back to equal-weight");
+      workerMetrics.inc("rebalance_fallback_total", { reason: "all_filtered" });
       return null;
     }
+
+    workerMetrics.set("yield_winner_apy", winner.market.depositApy);
+    workerMetrics.set("yield_winner_tvl", winner.market.totalDepositUsd);
+    workerMetrics.set("yield_winner_info", 1, {
+      strategy_id: winner.strategy.id,
+      provider: winner.market.provider.name,
+    });
 
     logger.info(
       {
@@ -173,6 +203,7 @@ async function resolveYieldWinner(
 
     return winner.strategy.id;
   } catch (error) {
+    workerMetrics.inc("rebalance_fallback_total", { reason: "api_fail" });
     logger.error(error, "Yield API failed, falling back to equal-weight");
     return null;
   }
