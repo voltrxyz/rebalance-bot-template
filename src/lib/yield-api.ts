@@ -2,8 +2,7 @@ import { config } from "../config";
 import { logger } from "./utils";
 import { StrategyConfig, strategyRegistry } from "./strategy-config";
 
-const DIAL_MARKETS_URL =
-  "https://markets.dial.to/api/v0/markets?type=yield&provider=kamino,jupiter";
+const YIELD_MARKETS_URL = config.yieldMarketsUrl;
 
 export interface DialMarket {
   id: string;
@@ -34,7 +33,7 @@ export async function fetchYieldMarkets(
   );
 
   try {
-    const response = await fetch(DIAL_MARKETS_URL, {
+    const response = await fetch(YIELD_MARKETS_URL, {
       signal: controller.signal,
     });
     if (!response.ok) {

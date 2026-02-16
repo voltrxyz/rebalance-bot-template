@@ -1,0 +1,33 @@
+{
+  "strategies": [
+    {
+      "id": "driftMain",
+      "type": "driftEarn",
+      "marketIndex": 0
+    },
+    {
+      "id": "driftJlp",
+      "type": "driftEarn",
+      "marketIndex": 34
+    },
+    {
+      "id": "jupiterLend",
+      "type": "jupiterLend"
+    },
+    {
+      "id": "elemental-usdg-optimizer",
+      "type": "kaminoVault",
+      "address": "DJbRxuBckoJpFVUNtWx94NghcthfGaRV5NRmEazUaddE"
+    },
+    {
+      "id": "steakhouse-usdg-high-yield",
+      "type": "kaminoVault",
+      "address": "BoZDRc1RDY9FzUZZ19WT4GbtTnnbXQ8AGSU5ByEw3ut5"
+    },
+    {
+      "id": "usdg-prime",
+      "type": "kaminoVault",
+      "address": "BqBsS4myH82S4yfqeKjXSF7yErWwSi5WTshSzKmHQgzw"
+    }
+  ]
+}

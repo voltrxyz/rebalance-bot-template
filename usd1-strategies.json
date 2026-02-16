@@ -1,0 +1,23 @@
+{
+  "strategies": [
+    {
+      "id": "driftMain",
+      "type": "driftEarn",
+      "marketIndex": 0
+    },
+    {
+      "id": "driftJlp",
+      "type": "driftEarn",
+      "marketIndex": 34
+    },
+    {
+      "id": "jupiterLend",
+      "type": "jupiterLend"
+    },
+    {
+      "id": "steakhouse-usd1-high-yield",
+      "type": "kaminoVault",
+      "address": "2eCcHyUfFmiLX5RnNY21Qfndqww7TmwaKBgNXX5Unu7o"
+    }
+  ]
+}

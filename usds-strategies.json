@@ -1,0 +1,33 @@
+{
+  "strategies": [
+    {
+      "id": "driftMain",
+      "type": "driftEarn",
+      "marketIndex": 0
+    },
+    {
+      "id": "driftJlp",
+      "type": "driftEarn",
+      "marketIndex": 34
+    },
+    {
+      "id": "jupiterLend",
+      "type": "jupiterLend"
+    },
+    {
+      "id": "elemental-usds-optimizer",
+      "type": "kaminoVault",
+      "address": "8wDtedCoYq2dH9UT1CoDC21v6kPHe32UNydhcvA8U9VS"
+    },
+    {
+      "id": "allez-usds",
+      "type": "kaminoVault",
+      "address": "A1USdsC4kypCgPw5dHAwmqDjfFKrtdVHtXLhDY9QvHQ3"
+    },
+    {
+      "id": "mev-capital-usds",
+      "type": "kaminoVault",
+      "address": "BQ4P3SNg9xN3heQH87eGn5uRwE4hgUcuN78Ym8jsLEDn"
+    }
+  ]
+}
